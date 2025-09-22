@@ -118,6 +118,38 @@ local GemsInfoTabClass = newClass("GemsInfoTab", "ControlHost", "Control", funct
 		end
 		y = y + lineHeight + 10
 		
+
+
+		-- Gem stats
+		-- Show gem stats for levels 1 to 20
+		for lvl = 1, 20 do
+			local gemInstance = {
+				level = lvl,
+				quality = self.selectedGem.quality or 0,
+				qualityId = self.selectedGem.qualityId or "Default",
+				displayEffect = nil,
+				gemData = self.selectedSkillData,
+			}
+			local stats = calcLib.buildSkillInstanceStats(gemInstance, self.selectedGem.grantedEffect)
+			local descriptions, lineMap = self.build.data.describeStats(stats, self.selectedGem.grantedEffect.statDescriptionScope)
+			
+			if descriptions and #descriptions > 0 then
+				if y >= contentStartY and y <= contentEndY then
+					SetDrawColor(1, 1, 1)
+					DrawString(px + 10, y, "LEFT", fontSize, "VAR", "Level " .. lvl .. ":")
+				end
+				y = y + lineHeight - 2
+				for _, line in ipairs(descriptions) do
+					if y >= contentStartY and y <= contentEndY then
+						SetDrawColor(1, 1, 1)
+						DrawString(px + 20, y, "LEFT", fontSize, "VAR", line)
+					end
+					y = y + lineHeight - 2
+				end
+				y = y + 6
+			end
+		end
+
 		-- Description
 		if self.selectedSkillData.description then
 			if y >= contentStartY and y <= contentEndY then
@@ -351,7 +383,7 @@ function GemsInfoTabClass:BuildActiveGems()
 	local gems = (self.build and self.build.data and self.build.data.gems) or { }
 	for gemId, gem in pairs(gems) do
 		if gem and gem.name and gem.grantedEffect and not gem.grantedEffect.support then
-			t_insert(self.activeGems, { id = gemId, name = gem.name })
+			t_insert(self.activeGems, { id = gemId, name = gem.name, grantedEffect = gem.grantedEffect })
 		end
 	end
 	m_sort(self.activeGems, function(a, b)
