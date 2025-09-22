@@ -17,7 +17,7 @@ local buildMode = new("ControlHost")
 
 local function InsertIfNew(t, val)
 	if (not t) then return end
-	for i,v in ipairs(t) do
+	for i, v in ipairs(t) do
 		if v == val then return end
 	end
 	table.insert(t, val)
@@ -60,7 +60,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.buildName = buildName
 	self.importLink = importLink
 	if dbFileName then
-		self.dbFileSubPath = self.dbFileName:sub(#main.buildPath + 1, -#self.buildName - 5)
+		self.dbFileSubPath = self.dbFileName:sub(#main.buildPath + 1, - #self.buildName - 5)
 	else
 		self.dbFileSubPath = main.modes.LIST.subPath or ""
 	end
@@ -69,9 +69,21 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	end
 
 	-- Load build file
-	self.xmlSectionList = { }
-	self.spectreList = { }
-	self.timelessData = { jewelType = { }, conquerorType = { }, devotionVariant1 = 1, devotionVariant2 = 1, jewelSocket = { }, fallbackWeightMode = { }, searchList = "", searchListFallback = "", searchResults = { }, sharedResults = { } }
+	self.xmlSectionList = {}
+	self.spectreList = {}
+	self.timelessData = {
+		jewelType = {},
+		conquerorType = {},
+		devotionVariant1 = 1,
+		devotionVariant2 = 1,
+		jewelSocket = {},
+		fallbackWeightMode = {},
+		searchList =
+		"",
+		searchListFallback = "",
+		searchResults = {},
+		sharedResults = {}
+	}
 	self.viewMode = "TREE"
 	self.characterLevel = m_min(m_max(main.defaultCharLevel or 1, 1), 100)
 	self.targetVersion = liveTargetVersion
@@ -109,17 +121,19 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	local miscTooltip = new("Tooltip")
 
 	-- Controls: top bar, left side
-	self.anchorTopBarLeft = new("Control", nil, {4, 4, 0, 20})
-	self.controls.back = new("ButtonControl", {"LEFT",self.anchorTopBarLeft,"RIGHT"}, {0, 0, 60, 20}, "<< Back", function()
-		if self.unsaved then
-			self:OpenSavePopup("LIST")
-		else
-			self:CloseBuild()
-		end
-	end)
-	self.controls.buildName = new("Control", {"LEFT",self.controls.back,"RIGHT"}, {8, 0, 0, 20})
+	self.anchorTopBarLeft = new("Control", nil, { 4, 4, 0, 20 })
+	self.controls.back = new("ButtonControl", { "LEFT", self.anchorTopBarLeft, "RIGHT" }, { 0, 0, 60, 20 }, "<< Back",
+		function()
+			if self.unsaved then
+				self:OpenSavePopup("LIST")
+			else
+				self:CloseBuild()
+			end
+		end)
+	self.controls.buildName = new("Control", { "LEFT", self.controls.back, "RIGHT" }, { 8, 0, 0, 20 })
 	self.controls.buildName.width = function(control)
-		local limit = self.anchorTopBarRight:GetPos() - 98 - 40 - self.controls.back:GetSize() - self.controls.save:GetSize() - self.controls.saveAs:GetSize()
+		local limit = self.anchorTopBarRight:GetPos() - 98 - 40 - self.controls.back:GetSize() -
+			self.controls.save:GetSize() - self.controls.saveAs:GetSize()
 		local bnw = DrawStringWidth(16, "VAR", self.buildName)
 		self.strWidth = m_min(bnw, limit)
 		self.strLimited = bnw > limit
@@ -134,13 +148,13 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		DrawImage(nil, x + 92, y + 1, self.strWidth + 4, 18)
 		SetDrawColor(1, 1, 1)
 		SetViewport(x, y + 2, self.strWidth + 94, 16)
-		DrawString(0, 0, "LEFT", 16, "VAR", "Current build:  "..self.buildName)
+		DrawString(0, 0, "LEFT", 16, "VAR", "Current build:  " .. self.buildName)
 		SetViewport()
 		if control:IsMouseInBounds() then
 			SetDrawLayer(nil, 10)
 			miscTooltip:Clear()
 			if self.dbFileSubPath and self.dbFileSubPath ~= "" then
-				miscTooltip:AddLine(16, self.dbFileSubPath..self.buildName)
+				miscTooltip:AddLine(16, self.dbFileSubPath .. self.buildName)
 			elseif self.strLimited then
 				miscTooltip:AddLine(16, self.buildName)
 			end
@@ -148,22 +162,24 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 			SetDrawLayer(nil, 0)
 		end
 	end
-	self.controls.save = new("ButtonControl", {"LEFT",self.controls.buildName,"RIGHT"}, {8, 0, 50, 20}, "Save", function()
-		self:SaveDBFile()
-	end)
+	self.controls.save = new("ButtonControl", { "LEFT", self.controls.buildName, "RIGHT" }, { 8, 0, 50, 20 }, "Save",
+		function()
+			self:SaveDBFile()
+		end)
 	self.controls.save.enabled = function()
 		return not self.dbFileName or self.unsaved
 	end
-	self.controls.saveAs = new("ButtonControl", {"LEFT",self.controls.save,"RIGHT"}, {8, 0, 70, 20}, "Save As", function()
-		self:OpenSaveAsPopup()
-	end)
+	self.controls.saveAs = new("ButtonControl", { "LEFT", self.controls.save, "RIGHT" }, { 8, 0, 70, 20 }, "Save As",
+		function()
+			self:OpenSaveAsPopup()
+		end)
 	self.controls.saveAs.enabled = function()
 		return self.dbFileName
 	end
 
 	-- Controls: top bar, right side
-	self.anchorTopBarRight = new("Control", nil, {function() return main.screenW / 2 + 6 end, 4, 0, 20})
-	self.controls.pointDisplay = new("Control", {"LEFT",self.anchorTopBarRight,"RIGHT"}, {-12, 0, 0, 20})
+	self.anchorTopBarRight = new("Control", nil, { function() return main.screenW / 2 + 6 end, 4, 0, 20 })
+	self.controls.pointDisplay = new("Control", { "LEFT", self.anchorTopBarRight, "RIGHT" }, { -12, 0, 0, 20 })
 	self.controls.pointDisplay.x = function(control)
 		local width, height = control:GetSize()
 		if self.controls.saveAs:GetPos() + self.controls.saveAs:GetSize() < self.anchorTopBarRight:GetPos() - width - 16 then
@@ -193,21 +209,23 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 			SetDrawLayer(nil, 0)
 		end
 	end
-	self.controls.levelScalingButton = new("ButtonControl", {"LEFT",self.controls.pointDisplay,"RIGHT"}, {12, 0, 50, 20}, self.characterLevelAutoMode and "Auto" or "Manual", function()
-		self.characterLevelAutoMode = not self.characterLevelAutoMode
-		self.controls.levelScalingButton.label = self.characterLevelAutoMode and "Auto" or "Manual"
-		self.configTab:BuildModList()
-		self.modFlag = true
-		self.buildFlag = true
-	end)
-	self.controls.characterLevel = new("EditControl", {"LEFT",self.controls.levelScalingButton,"RIGHT"}, {8, 0, 106, 20}, "", "Level", "%D", 3, function(buf)
-		self.characterLevel = m_min(m_max(tonumber(buf) or 1, 1), 100)
-		self.configTab:BuildModList()
-		self.modFlag = true
-		self.buildFlag = true
-		self.characterLevelAutoMode = false
-		self.controls.levelScalingButton.label = "Manual"
-	end)
+	self.controls.levelScalingButton = new("ButtonControl", { "LEFT", self.controls.pointDisplay, "RIGHT" },
+		{ 12, 0, 50, 20 }, self.characterLevelAutoMode and "Auto" or "Manual", function()
+			self.characterLevelAutoMode = not self.characterLevelAutoMode
+			self.controls.levelScalingButton.label = self.characterLevelAutoMode and "Auto" or "Manual"
+			self.configTab:BuildModList()
+			self.modFlag = true
+			self.buildFlag = true
+		end)
+	self.controls.characterLevel = new("EditControl", { "LEFT", self.controls.levelScalingButton, "RIGHT" },
+		{ 8, 0, 106, 20 }, "", "Level", "%D", 3, function(buf)
+			self.characterLevel = m_min(m_max(tonumber(buf) or 1, 1), 100)
+			self.configTab:BuildModList()
+			self.modFlag = true
+			self.buildFlag = true
+			self.characterLevelAutoMode = false
+			self.controls.levelScalingButton.label = "Manual"
+		end)
 	self.controls.characterLevel:SetText(self.characterLevel)
 	self.controls.characterLevel.tooltipFunc = function(tooltip)
 		if tooltip:CheckForUpdate(self.characterLevel) then
@@ -223,12 +241,12 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 					mult = ((playerLevel + 5) / (playerLevel + 5 + diff ^ 2.5)) ^ 1.5
 				end
 				if playerLevel >= 95 then
-					local xpPenalty = ({0.935, 0.885, 0.813, 0.7175, 0.6})[playerLevel - 94] or 0
+					local xpPenalty = ({ 0.935, 0.885, 0.813, 0.7175, 0.6 })[playerLevel - 94] or 0
 					mult = mult * (1 / (1 + 0.1 * (playerLevel - 94))) * xpPenalty
 				end
 				if mult > 0.01 then
 					local line = level
-					if level >= 68 then 
+					if level >= 68 then
 						line = line .. string.format(" (Tier %d)", level - 67)
 					end
 					line = line .. string.format(": %.1f%%", mult * 100)
@@ -237,29 +255,35 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 			end
 		end
 	end
-	self.controls.classDrop = new("DropDownControl", {"LEFT",self.controls.characterLevel,"RIGHT"}, {8, 0, 100, 20}, nil, function(index, value)
-		if value.classId ~= self.spec.curClassId then
-			if self.spec:CountAllocNodes() == 0 or self.spec:IsClassConnected(value.classId) then
-				self.spec:SelectClass(value.classId)
-				self.spec:AddUndoState()
-				self.spec:SetWindowTitleWithBuildClass()
-				self.buildFlag = true
-			else
-				main:OpenConfirmPopup("Class Change", "Changing class to "..value.label.." will reset your passive tree.\nThis can be avoided by connecting one of the "..value.label.." starting nodes to your tree.", "Continue", function()
+	self.controls.classDrop = new("DropDownControl", { "LEFT", self.controls.characterLevel, "RIGHT" }, { 8, 0, 100, 20 },
+		nil, function(index, value)
+			if value.classId ~= self.spec.curClassId then
+				if self.spec:CountAllocNodes() == 0 or self.spec:IsClassConnected(value.classId) then
 					self.spec:SelectClass(value.classId)
 					self.spec:AddUndoState()
 					self.spec:SetWindowTitleWithBuildClass()
-					self.buildFlag = true					
-				end)
+					self.buildFlag = true
+				else
+					main:OpenConfirmPopup("Class Change",
+						"Changing class to " ..
+						value.label ..
+						" will reset your passive tree.\nThis can be avoided by connecting one of the " ..
+						value.label .. " starting nodes to your tree.", "Continue", function()
+							self.spec:SelectClass(value.classId)
+							self.spec:AddUndoState()
+							self.spec:SetWindowTitleWithBuildClass()
+							self.buildFlag = true
+						end)
+				end
 			end
-		end
-	end)
-	self.controls.ascendDrop = new("DropDownControl", {"LEFT",self.controls.classDrop,"RIGHT"}, {8, 0, 120, 20}, nil, function(index, value)
-		self.spec:SelectAscendClass(value.ascendClassId)
-		self.spec:AddUndoState()
-		self.spec:SetWindowTitleWithBuildClass()
-		self.buildFlag = true
-	end)
+		end)
+	self.controls.ascendDrop = new("DropDownControl", { "LEFT", self.controls.classDrop, "RIGHT" }, { 8, 0, 120, 20 },
+		nil, function(index, value)
+			self.spec:SelectAscendClass(value.ascendClassId)
+			self.spec:AddUndoState()
+			self.spec:SetWindowTitleWithBuildClass()
+			self.buildFlag = true
+		end)
 	-- // hiding away until we learn more, this dropdown and the Loadout dropdown conflict for UI space, will need to address if secondaryAscendancies come back
 	--self.controls.secondaryAscendDrop = new("DropDownControl", {"LEFT",self.controls.ascendDrop,"RIGHT"}, {8, 0, 120, 20}, nil, function(index, value)
 	--	self.spec:SelectSecondaryAscendClass(value.ascendClassId)
@@ -267,121 +291,126 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	--	self.spec:SetWindowTitleWithBuildClass()
 	--	self.buildFlag = true
 	--end)
-	self.controls.buildLoadouts = new("DropDownControl", {"LEFT",self.controls.ascendDrop,"RIGHT"}, {8, 0, 190, 20}, {}, function(index, value)
-		if value == "^7^7Loadouts:" or value == "^7^7-----" then
-			self.controls.buildLoadouts:SetSel(1)
-			return
-		end
-		if value == "^7^7Sync" then
-			self:SyncLoadouts()
-			self.controls.buildLoadouts:SetSel(1)
-			return
-		end
-		if value == "^7^7Help >>" then
-			main:OpenAboutPopup(7)
-			self.controls.buildLoadouts:SetSel(1)
-			return
-		end
-		if value == "^7^7New Loadout" then
-			local controls = { }
-			controls.label = new("LabelControl", nil, {0, 20, 0, 16}, "^7Enter name for this loadout:")
-			controls.edit = new("EditControl", nil, {0, 40, 350, 20}, "New Loadout", nil, nil, 100, function(buf)
-				controls.save.enabled = buf:match("%S")
-			end)
-			controls.save = new("ButtonControl", nil, {-45, 70, 80, 20}, "Save", function()
-				local loadout = controls.edit.buf
-
-				local newSpec = new("PassiveSpec", self, latestTreeVersion)
-				newSpec.title = loadout
-				t_insert(self.treeTab.specList, newSpec)
-
-				local itemSet = self.itemsTab:NewItemSet(#self.itemsTab.itemSets + 1)
-				t_insert(self.itemsTab.itemSetOrderList, itemSet.id)
-				itemSet.title = loadout
-
-				local skillSet = self.skillsTab:NewSkillSet(#self.skillsTab.skillSets + 1)
-				t_insert(self.skillsTab.skillSetOrderList, skillSet.id)
-				skillSet.title = loadout
-
-				local configSet = self.configTab:NewConfigSet(#self.configTab.configSets + 1)
-				t_insert(self.configTab.configSetOrderList, configSet.id)
-				configSet.title = loadout
-
+	self.controls.buildLoadouts = new("DropDownControl", { "LEFT", self.controls.ascendDrop, "RIGHT" }, { 8, 0, 190, 20 },
+		{}, function(index, value)
+			if value == "^7^7Loadouts:" or value == "^7^7-----" then
+				self.controls.buildLoadouts:SetSel(1)
+				return
+			end
+			if value == "^7^7Sync" then
 				self:SyncLoadouts()
-				self.modFlag = true
-				main:ClosePopup()
-			end)
-			controls.save.enabled = false
-			controls.cancel = new("ButtonControl", nil, {45, 70, 80, 20}, "Cancel", function()
-				main:ClosePopup()
-			end)
-			main:OpenPopup(370, 100, "Set Name", controls, "save", "edit", "cancel")
+				self.controls.buildLoadouts:SetSel(1)
+				return
+			end
+			if value == "^7^7Help >>" then
+				main:OpenAboutPopup(7)
+				self.controls.buildLoadouts:SetSel(1)
+				return
+			end
+			if value == "^7^7New Loadout" then
+				local controls = {}
+				controls.label = new("LabelControl", nil, { 0, 20, 0, 16 }, "^7Enter name for this loadout:")
+				controls.edit = new("EditControl", nil, { 0, 40, 350, 20 }, "New Loadout", nil, nil, 100, function(buf)
+					controls.save.enabled = buf:match("%S")
+				end)
+				controls.save = new("ButtonControl", nil, { -45, 70, 80, 20 }, "Save", function()
+					local loadout = controls.edit.buf
 
-			self.controls.buildLoadouts:SetSel(1)
-			return
-		end
+					local newSpec = new("PassiveSpec", self, latestTreeVersion)
+					newSpec.title = loadout
+					t_insert(self.treeTab.specList, newSpec)
 
-		-- item, skill, and config sets have identical structure
-		-- return id as soon as it's found
-		local function findSetId(setOrderList, value, sets, setSpecialLinks)
-			for _, setOrder in ipairs(setOrderList) do
-				if value == (sets[setOrder].title or "Default") then
-					return setOrder
-				else
-					local linkMatch = string.match(value, "%{(%w+)%}")
-					if linkMatch then
-						return setSpecialLinks[linkMatch]["setId"]
+					local itemSet = self.itemsTab:NewItemSet(#self.itemsTab.itemSets + 1)
+					t_insert(self.itemsTab.itemSetOrderList, itemSet.id)
+					itemSet.title = loadout
+
+					local skillSet = self.skillsTab:NewSkillSet(#self.skillsTab.skillSets + 1)
+					t_insert(self.skillsTab.skillSetOrderList, skillSet.id)
+					skillSet.title = loadout
+
+					local configSet = self.configTab:NewConfigSet(#self.configTab.configSets + 1)
+					t_insert(self.configTab.configSetOrderList, configSet.id)
+					configSet.title = loadout
+
+					self:SyncLoadouts()
+					self.modFlag = true
+					main:ClosePopup()
+				end)
+				controls.save.enabled = false
+				controls.cancel = new("ButtonControl", nil, { 45, 70, 80, 20 }, "Cancel", function()
+					main:ClosePopup()
+				end)
+				main:OpenPopup(370, 100, "Set Name", controls, "save", "edit", "cancel")
+
+				self.controls.buildLoadouts:SetSel(1)
+				return
+			end
+
+			-- item, skill, and config sets have identical structure
+			-- return id as soon as it's found
+			local function findSetId(setOrderList, value, sets, setSpecialLinks)
+				for _, setOrder in ipairs(setOrderList) do
+					if value == (sets[setOrder].title or "Default") then
+						return setOrder
+					else
+						local linkMatch = string.match(value, "%{(%w+)%}")
+						if linkMatch then
+							return setSpecialLinks[linkMatch]["setId"]
+						end
 					end
 				end
+				return nil
 			end
-			return nil
-		end
 
-		-- trees have a different structure with id/name pairs
-		-- return id as soon as it's found
-		local function findNamedSetId(treeList, value, setSpecialLinks)
-			for id, spec in ipairs(treeList) do
-				if value == spec then
-					return id
-				else
-					local linkMatch = string.match(value, "%{(%w+)%}")
-					if linkMatch then
-						return setSpecialLinks[linkMatch]["setId"]
+			-- trees have a different structure with id/name pairs
+			-- return id as soon as it's found
+			local function findNamedSetId(treeList, value, setSpecialLinks)
+				for id, spec in ipairs(treeList) do
+					if value == spec then
+						return id
+					else
+						local linkMatch = string.match(value, "%{(%w+)%}")
+						if linkMatch then
+							return setSpecialLinks[linkMatch]["setId"]
+						end
 					end
 				end
+				return nil
 			end
-			return nil
-		end
 
-		local oneSkill = self.skillsTab and #self.skillsTab.skillSetOrderList == 1
-		local oneItem = self.itemsTab and #self.itemsTab.itemSetOrderList == 1
-		local oneConfig = self.configTab and #self.configTab.configSetOrderList == 1
+			local oneSkill = self.skillsTab and #self.skillsTab.skillSetOrderList == 1
+			local oneItem = self.itemsTab and #self.itemsTab.itemSetOrderList == 1
+			local oneConfig = self.configTab and #self.configTab.configSetOrderList == 1
 
-		local newSpecId = findNamedSetId(self.treeTab:GetSpecList(), value, self.treeListSpecialLinks)
-		local newItemId = oneItem and 1 or findSetId(self.itemsTab.itemSetOrderList, value, self.itemsTab.itemSets, self.itemListSpecialLinks)
-		local newSkillId = oneSkill and 1 or findSetId(self.skillsTab.skillSetOrderList, value, self.skillsTab.skillSets, self.skillListSpecialLinks)
-		local newConfigId = oneConfig and 1 or findSetId(self.configTab.configSetOrderList, value, self.configTab.configSets, self.configListSpecialLinks)
+			local newSpecId = findNamedSetId(self.treeTab:GetSpecList(), value, self.treeListSpecialLinks)
+			local newItemId = oneItem and 1 or
+				findSetId(self.itemsTab.itemSetOrderList, value, self.itemsTab.itemSets, self.itemListSpecialLinks)
+			local newSkillId = oneSkill and 1 or
+				findSetId(self.skillsTab.skillSetOrderList, value, self.skillsTab.skillSets, self.skillListSpecialLinks)
+			local newConfigId = oneConfig and 1 or
+				findSetId(self.configTab.configSetOrderList, value, self.configTab.configSets,
+					self.configListSpecialLinks)
 
-		-- if exact match nor special grouping cannot find setIds, bail
-		if newSpecId == nil or newItemId == nil or newSkillId == nil or newConfigId == nil then
-			return
-		end
+			-- if exact match nor special grouping cannot find setIds, bail
+			if newSpecId == nil or newItemId == nil or newSkillId == nil or newConfigId == nil then
+				return
+			end
 
-		if newSpecId ~= self.treeTab.activeSpec then
-			self.treeTab:SetActiveSpec(newSpecId)
-		end
-		if newItemId ~= self.itemsTab.activeItemSetId then
-			self.itemsTab:SetActiveItemSet(newItemId)
-		end
-		if newSkillId ~= self.skillsTab.activeSkillSetId then
-			self.skillsTab:SetActiveSkillSet(newSkillId)
-		end
-		if newConfigId ~= self.configTab.activeConfigSetId then
-			self.configTab:SetActiveConfigSet(newConfigId)
-		end
+			if newSpecId ~= self.treeTab.activeSpec then
+				self.treeTab:SetActiveSpec(newSpecId)
+			end
+			if newItemId ~= self.itemsTab.activeItemSetId then
+				self.itemsTab:SetActiveItemSet(newItemId)
+			end
+			if newSkillId ~= self.skillsTab.activeSkillSetId then
+				self.skillsTab:SetActiveSkillSet(newSkillId)
+			end
+			if newConfigId ~= self.configTab.activeConfigSetId then
+				self.configTab:SetActiveConfigSet(newConfigId)
+			end
 
-		self.controls.buildLoadouts:SelByValue(value)
-	end)
+			self.controls.buildLoadouts:SelByValue(value)
+		end)
 
 	--self.controls.similarBuilds = new("ButtonControl", {"LEFT",self.controls.buildLoadouts,"RIGHT"}, {8, 0, 100, 20}, "Similar Builds", function()
 	--	self:OpenSimilarPopup()
@@ -391,7 +420,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	--	tooltip:AddLine(16, "Search for builds similar to your current character.")
 	--	tooltip:AddLine(16, "For best results, make sure to select your main item set, tree, and skills before opening the popup.")
 	--end
-	
+
 	if buildName == "~~temp~~" then
 		-- Remove temporary build file
 		os.remove(self.dbFileName)
@@ -405,46 +434,61 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.displayStats, self.minionDisplayStats, self.extraSaveStats = LoadModule("Modules/BuildDisplayStats")
 
 	-- Controls: Side bar
-	self.anchorSideBar = new("Control", nil, {4, 36, 0, 0})
-	self.controls.modeImport = new("ButtonControl", {"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 0, 134, 20}, "Import/Export Build", function()
-		self.viewMode = "IMPORT"
-	end)
+	self.anchorSideBar = new("Control", nil, { 4, 36, 0, 0 })
+	self.controls.modeImport = new("ButtonControl", { "TOPLEFT", self.anchorSideBar, "TOPLEFT" }, { 0, 0, 134, 20 },
+		"Import/Export Build", function()
+			self.viewMode = "IMPORT"
+		end)
 	self.controls.modeImport.locked = function() return self.viewMode == "IMPORT" end
-	self.controls.modeNotes = new("ButtonControl", {"LEFT",self.controls.modeImport,"RIGHT"}, {4, 0, 58, 20}, "Notes", function()
-		self.viewMode = "NOTES"
-	end)
+	self.controls.modeNotes = new("ButtonControl", { "LEFT", self.controls.modeImport, "RIGHT" }, { 4, 0, 58, 20 },
+		"Notes", function()
+			self.viewMode = "NOTES"
+		end)
 	self.controls.modeNotes.locked = function() return self.viewMode == "NOTES" end
-	self.controls.modeConfig = new("ButtonControl", {"TOPRIGHT",self.anchorSideBar,"TOPLEFT"}, {300, 0, 100, 20}, "Configuration", function()
-		self.viewMode = "CONFIG"
-	end)
+	self.controls.modeConfig = new("ButtonControl", { "TOPRIGHT", self.anchorSideBar, "TOPLEFT" }, { 300, 0, 100, 20 },
+		"Configuration", function()
+			self.viewMode = "CONFIG"
+		end)
 	self.controls.modeConfig.locked = function() return self.viewMode == "CONFIG" end
-	self.controls.modeTree = new("ButtonControl", {"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 26, 72, 20}, "Tree", function()
-		self.viewMode = "TREE"
-	end)
+	self.controls.modeTree = new("ButtonControl", { "TOPLEFT", self.anchorSideBar, "TOPLEFT" }, { 0, 26, 72, 20 }, "Tree",
+		function()
+			self.viewMode = "TREE"
+		end)
 	self.controls.modeTree.locked = function() return self.viewMode == "TREE" end
-	self.controls.modeSkills = new("ButtonControl", {"LEFT",self.controls.modeTree,"RIGHT"}, {4, 0, 72, 20}, "Skills", function()
-		self.viewMode = "SKILLS"
-	end)
+	self.controls.modeSkills = new("ButtonControl", { "LEFT", self.controls.modeTree, "RIGHT" }, { 4, 0, 72, 20 },
+		"Skills", function()
+			self.viewMode = "SKILLS"
+		end)
 	self.controls.modeSkills.locked = function() return self.viewMode == "SKILLS" end
-	self.controls.modeItems = new("ButtonControl", {"LEFT",self.controls.modeSkills,"RIGHT"}, {4, 0, 72, 20}, "Items", function()
-		self.viewMode = "ITEMS"
-	end)
+	self.controls.modeItems = new("ButtonControl", { "LEFT", self.controls.modeSkills, "RIGHT" }, { 4, 0, 72, 20 },
+		"Items", function()
+			self.viewMode = "ITEMS"
+		end)
 	self.controls.modeItems.locked = function() return self.viewMode == "ITEMS" end
-	self.controls.modeCalcs = new("ButtonControl", {"LEFT",self.controls.modeItems,"RIGHT"}, {4, 0, 72, 20}, "Calcs", function()
-		self.viewMode = "CALCS"
-	end)
+	self.controls.modeCalcs = new("ButtonControl", { "LEFT", self.controls.modeItems, "RIGHT" }, { 4, 0, 72, 20 },
+		"Calcs", function()
+			self.viewMode = "CALCS"
+		end)
 	self.controls.modeCalcs.locked = function() return self.viewMode == "CALCS" end
-	self.controls.modeParty = new("ButtonControl", {"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 52, 72, 20}, "Party", function()
-		self.viewMode = "PARTY"
-	end)
+	self.controls.modeParty = new("ButtonControl", { "TOPLEFT", self.anchorSideBar, "TOPLEFT" }, { 0, 52, 72, 20 },
+		"Party", function()
+			self.viewMode = "PARTY"
+		end)
 	self.controls.modeParty.locked = function() return self.viewMode == "PARTY" end
+	self.controls.modeCustom = new("ButtonControl", { "LEFT", self.controls.modeParty, "RIGHT" }, { 4, 0, 72, 20 },
+		"Custom", function()
+			self.viewMode = "CUSTOM"
+		end)
+	self.controls.modeCustom.locked = function() return self.viewMode == "CUSTOM" end
 	-- Skills
-	self.controls.mainSkillLabel = new("LabelControl", {"TOPLEFT",self.anchorSideBar,"TOPLEFT"}, {0, 80, 300, 16}, "^7Main Skill:")
-	self.controls.mainSocketGroup = new("DropDownControl", {"TOPLEFT",self.controls.mainSkillLabel,"BOTTOMLEFT"}, {0, 2, 300, 18}, nil, function(index, value)
-		self.mainSocketGroup = index
-		self.modFlag = true
-		self.buildFlag = true
-	end)
+	self.controls.mainSkillLabel = new("LabelControl", { "TOPLEFT", self.anchorSideBar, "TOPLEFT" }, { 0, 80, 300, 16 },
+		"^7Main Skill:")
+	self.controls.mainSocketGroup = new("DropDownControl", { "TOPLEFT", self.controls.mainSkillLabel, "BOTTOMLEFT" },
+		{ 0, 2, 300, 18 }, nil, function(index, value)
+			self.mainSocketGroup = index
+			self.modFlag = true
+			self.buildFlag = true
+		end)
 	self.controls.mainSocketGroup.maxDroppedWidth = 500
 	self.controls.mainSocketGroup.tooltipFunc = function(tooltip, mode, index, value)
 		local socketGroup = self.skillsTab.socketGroupList[index]
@@ -452,90 +496,115 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 			self.skillsTab:AddSocketGroupTooltip(tooltip, socketGroup)
 		end
 	end
-	self.controls.mainSkill = new("DropDownControl", {"TOPLEFT",self.controls.mainSocketGroup,"BOTTOMLEFT"}, {0, 2, 300, 18}, nil, function(index, value)
-		local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-		mainSocketGroup.mainActiveSkill = index
-		self.modFlag = true
-		self.buildFlag = true
-	end)
-	self.controls.mainSkillPart = new("DropDownControl", {"TOPLEFT",self.controls.mainSkill,"BOTTOMLEFT",true}, {0, 2, 300, 18}, nil, function(index, value)
-		local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-		local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect.srcInstance
-		srcInstance.skillPart = index
-		self.modFlag = true
-		self.buildFlag = true
-	end)
-	self.controls.mainSkillStageCountLabel = new("LabelControl", {"TOPLEFT",self.controls.mainSkillPart,"BOTTOMLEFT",true}, {0, 3, 0, 16}, "^7Stages:") {
+	self.controls.mainSkill = new("DropDownControl", { "TOPLEFT", self.controls.mainSocketGroup, "BOTTOMLEFT" },
+		{ 0, 2, 300, 18 }, nil, function(index, value)
+			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
+			mainSocketGroup.mainActiveSkill = index
+			self.modFlag = true
+			self.buildFlag = true
+		end)
+	self.controls.mainSkillPart = new("DropDownControl", { "TOPLEFT", self.controls.mainSkill, "BOTTOMLEFT", true },
+		{ 0, 2, 300, 18 }, nil, function(index, value)
+			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
+			local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect
+				.srcInstance
+			srcInstance.skillPart = index
+			self.modFlag = true
+			self.buildFlag = true
+		end)
+	self.controls.mainSkillStageCountLabel = new("LabelControl",
+		{ "TOPLEFT", self.controls.mainSkillPart, "BOTTOMLEFT", true }, { 0, 3, 0, 16 }, "^7Stages:") {
 		shown = function()
 			return self.controls.mainSkillStageCount:IsShown()
 		end,
 	}
-	self.controls.mainSkillStageCount = new("EditControl", {"LEFT",self.controls.mainSkillStageCountLabel,"RIGHT",true}, {2, 0, 60, 18}, nil, nil, "%D", nil, function(buf)
-		local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-		local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect.srcInstance
-		srcInstance.skillStageCount = tonumber(buf)
-		self.modFlag = true
-		self.buildFlag = true
-	end)
-	self.controls.mainSkillMineCountLabel = new("LabelControl", {"TOPLEFT",self.controls.mainSkillStageCountLabel,"BOTTOMLEFT",true}, {0, 3, 0, 16}, "^7Active Mines:") {
+	self.controls.mainSkillStageCount = new("EditControl",
+		{ "LEFT", self.controls.mainSkillStageCountLabel, "RIGHT", true },
+		{ 2, 0, 60, 18 }, nil, nil, "%D", nil, function(buf)
+			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
+			local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect
+				.srcInstance
+			srcInstance.skillStageCount = tonumber(buf)
+			self.modFlag = true
+			self.buildFlag = true
+		end)
+	self.controls.mainSkillMineCountLabel = new("LabelControl",
+		{ "TOPLEFT", self.controls.mainSkillStageCountLabel, "BOTTOMLEFT", true }, { 0, 3, 0, 16 }, "^7Active Mines:") {
 		shown = function()
 			return self.controls.mainSkillMineCount:IsShown()
 		end,
 	}
-	self.controls.mainSkillMineCount = new("EditControl", {"LEFT",self.controls.mainSkillMineCountLabel,"RIGHT",true}, {2, 0, 60, 18}, nil, nil, "%D", nil, function(buf)
-		local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-		local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect.srcInstance
-		srcInstance.skillMineCount = tonumber(buf)
-		self.modFlag = true
-		self.buildFlag = true
-	end)
-	self.controls.mainSkillMinion = new("DropDownControl", {"TOPLEFT",self.controls.mainSkillMineCountLabel,"BOTTOMLEFT",true}, {0, 3, 178, 18}, nil, function(index, value)
-		local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-		local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect.srcInstance
-		if value.itemSetId then
-			srcInstance.skillMinionItemSet = value.itemSetId
-		else
-			srcInstance.skillMinion = value.minionId
-		end
-		self.modFlag = true
-		self.buildFlag = true
-	end)
+	self.controls.mainSkillMineCount = new("EditControl",
+		{ "LEFT", self.controls.mainSkillMineCountLabel, "RIGHT", true },
+		{ 2, 0, 60, 18 }, nil, nil, "%D", nil, function(buf)
+			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
+			local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect
+				.srcInstance
+			srcInstance.skillMineCount = tonumber(buf)
+			self.modFlag = true
+			self.buildFlag = true
+		end)
+	self.controls.mainSkillMinion = new("DropDownControl",
+		{ "TOPLEFT", self.controls.mainSkillMineCountLabel, "BOTTOMLEFT", true }, { 0, 3, 178, 18 }, nil,
+		function(index, value)
+			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
+			local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect
+				.srcInstance
+			if value.itemSetId then
+				srcInstance.skillMinionItemSet = value.itemSetId
+			else
+				srcInstance.skillMinion = value.minionId
+			end
+			self.modFlag = true
+			self.buildFlag = true
+		end)
 	function self.controls.mainSkillMinion.CanReceiveDrag(control, type, value)
 		if type == "Item" and control.list[control.selIndex] and control.list[control.selIndex].itemSetId then
 			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-			local minionUses = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect.grantedEffect.minionUses
+			local minionUses = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect
+				.grantedEffect.minionUses
 			return minionUses and minionUses[value:GetPrimarySlot()] -- O_O
 		end
 	end
+
 	function self.controls.mainSkillMinion.ReceiveDrag(control, type, value, source)
 		self.itemsTab:EquipItemInSet(value, control.list[control.selIndex].itemSetId)
 	end
+
 	function self.controls.mainSkillMinion.tooltipFunc(tooltip, mode, index, value)
 		tooltip:Clear()
 		if value.itemSetId then
 			self.itemsTab:AddItemSetTooltip(tooltip, self.itemsTab.itemSets[value.itemSetId])
 			tooltip:AddSeparator(14)
-			tooltip:AddLine(14, colorCodes.TIP.."Tip: You can drag items from the Items tab onto this dropdown to equip them onto the minion.")
+			tooltip:AddLine(14,
+				colorCodes.TIP ..
+				"Tip: You can drag items from the Items tab onto this dropdown to equip them onto the minion.")
 		end
 	end
-	self.controls.mainSkillMinionLibrary = new("ButtonControl", {"LEFT",self.controls.mainSkillMinion,"RIGHT"}, {2, 0, 120, 18}, "Manage Spectres...", function()
-		self:OpenSpectreLibrary()
-	end)
-	self.controls.mainSkillMinionSkill = new("DropDownControl", {"TOPLEFT",self.controls.mainSkillMinion,"BOTTOMLEFT",true}, {0, 2, 200, 16}, nil, function(index, value)
-		local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
-		local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect.srcInstance
-		srcInstance.skillMinionSkill = index
-		self.modFlag = true
-		self.buildFlag = true
-	end)
-	self.controls.statBoxAnchor = new("Control", {"TOPLEFT",self.controls.mainSkillMinionSkill,"BOTTOMLEFT",true}, {0, 2, 0, 0})
-	self.controls.statBox = new("TextListControl", {"TOPLEFT",self.controls.statBoxAnchor,"BOTTOMLEFT"}, {0, 2, 300, 0}, {{x=170,align="RIGHT_X"},{x=174,align="LEFT"}})
+
+	self.controls.mainSkillMinionLibrary = new("ButtonControl", { "LEFT", self.controls.mainSkillMinion, "RIGHT" },
+		{ 2, 0, 120, 18 }, "Manage Spectres...", function()
+			self:OpenSpectreLibrary()
+		end)
+	self.controls.mainSkillMinionSkill = new("DropDownControl",
+		{ "TOPLEFT", self.controls.mainSkillMinion, "BOTTOMLEFT", true }, { 0, 2, 200, 16 }, nil, function(index, value)
+			local mainSocketGroup = self.skillsTab.socketGroupList[self.mainSocketGroup]
+			local srcInstance = mainSocketGroup.displaySkillList[mainSocketGroup.mainActiveSkill].activeEffect
+				.srcInstance
+			srcInstance.skillMinionSkill = index
+			self.modFlag = true
+			self.buildFlag = true
+		end)
+	self.controls.statBoxAnchor = new("Control", { "TOPLEFT", self.controls.mainSkillMinionSkill, "BOTTOMLEFT", true },
+		{ 0, 2, 0, 0 })
+	self.controls.statBox = new("TextListControl", { "TOPLEFT", self.controls.statBoxAnchor, "BOTTOMLEFT" },
+		{ 0, 2, 300, 0 }, { { x = 170, align = "RIGHT_X" }, { x = 174, align = "LEFT" } })
 	self.controls.statBox.height = function(control)
 		local x, y = control:GetPos()
 		local warnHeight = main.showWarnings and #self.controls.warnings.lines > 0 and 18 or 0
 		return main.screenH - main.mainBarHeight - 4 - y - warnHeight
 	end
-	self.controls.warnings = new("Control",{"TOPLEFT",self.controls.statBox,"BOTTOMLEFT",true}, {0, 0, 0, 18})
+	self.controls.warnings = new("Control", { "TOPLEFT", self.controls.statBox, "BOTTOMLEFT", true }, { 0, 0, 0, 18 })
 	self.controls.warnings.lines = {}
 	self.controls.warnings.width = function(control)
 		return control.str and DrawStringWidth(16, "FIXED", control.str) + 8 or 0
@@ -544,14 +613,14 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		if #self.controls.warnings.lines > 0 then
 			local count = 0
 			for _ in pairs(self.controls.warnings.lines) do count = count + 1 end
-			control.str = string.format(colorCodes.NEGATIVE.."%d Warnings", count)
+			control.str = string.format(colorCodes.NEGATIVE .. "%d Warnings", count)
 			local x, y = control:GetPos()
 			local width, height = control:GetSize()
 			DrawString(x, y + 2, "LEFT", 16, "FIXED", control.str)
 			if control:IsMouseInBounds() then
 				SetDrawLayer(nil, 10)
 				miscTooltip:Clear()
-				for k,v in pairs(self.controls.warnings.lines) do miscTooltip:AddLine(16, v) end
+				for k, v in pairs(self.controls.warnings.lines) do miscTooltip:AddLine(16, v) end
 				miscTooltip:Draw(x, y, width, height, main.viewPort)
 				SetDrawLayer(nil, 0)
 			end
@@ -572,6 +641,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	self.treeTab = new("TreeTab", self)
 	self.skillsTab = new("SkillsTab", self)
 	self.calcsTab = new("CalcsTab", self)
+	self.customTab = new("CustomTab", self)
 
 	-- Load sections from the build file
 	self.savers = {
@@ -584,11 +654,12 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		["Skills"] = self.skillsTab,
 		["Calcs"] = self.calcsTab,
 		["Import"] = self.importTab,
+		["Custom"] = self.customTab,
 	}
 	self.legacyLoaders = { -- Special loaders for legacy sections
 		["Spec"] = self.treeTab,
 	}
-	
+
 	--special rebuild to properly initialise boss placeholders
 	self.configTab:BuildModList()
 	self:UpdateClassDropdowns()
@@ -601,13 +672,13 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	-- so we ran into problems with converted trees, trying to check passive tree routes and also consider thread jewels
 	-- but we can't check jewel info because items have not been loaded yet, and they come after passives in the xml.
 	-- the simplest solution seems to be making sure passive trees (which contain jewel sockets) are loaded last.
-	local deferredPassiveTrees = { }
+	local deferredPassiveTrees = {}
 	for _, node in ipairs(self.xmlSectionList) do
 		-- Check if there is a saver that can load this section
 		local saver = self.savers[node.elem] or self.legacyLoaders[node.elem]
 		if saver then
 			-- if the saver is treeTab, defer it until everything is loaded
-			if saver == self.treeTab  then
+			if saver == self.treeTab then
 				t_insert(deferredPassiveTrees, node)
 			else
 				if saver:Load(node, self.dbFileName) then
@@ -714,15 +785,16 @@ local function actExtra(act, extra)
 end
 
 function buildMode:SyncLoadouts()
-	self.controls.buildLoadouts.list = {"No Loadouts"}
+	self.controls.buildLoadouts.list = { "No Loadouts" }
 
-	local filteredList = {"^7^7Loadouts:"}
+	local filteredList = { "^7^7Loadouts:" }
 	local treeList = {}
 	local itemList = {}
 	local skillList = {}
 	local configList = {}
 	-- used when clicking on the dropdown to set the correct setId for each SetActiveSet()
-	self.treeListSpecialLinks, self.itemListSpecialLinks, self.skillListSpecialLinks, self.configListSpecialLinks = {}, {}, {}, {}
+	self.treeListSpecialLinks, self.itemListSpecialLinks, self.skillListSpecialLinks, self.configListSpecialLinks = {},
+		{}, {}, {}
 
 	local oneSkill = self.skillsTab and #self.skillsTab.skillSetOrderList == 1
 	local oneItem = self.itemsTab and #self.itemsTab.itemSetOrderList == 1
@@ -754,7 +826,9 @@ function buildMode:SyncLoadouts()
 					transferTable = {}
 				end
 			else
-				t_insert(treeList, (spec.treeVersion ~= latestTreeVersion and ("["..treeVersions[spec.treeVersion].display.."] ") or "")..(specTitle))
+				t_insert(treeList,
+					(spec.treeVersion ~= latestTreeVersion and ("[" .. treeVersions[spec.treeVersion].display .. "] ") or "") ..
+					(specTitle))
 			end
 		end
 
@@ -783,9 +857,12 @@ function buildMode:SyncLoadouts()
 				end
 			end
 		end
-		identifyLinks(self.itemsTab.itemSetOrderList, self.itemsTab.itemSets, itemList, self.itemListSpecialLinks, self.treeListSpecialLinks)
-		identifyLinks(self.skillsTab.skillSetOrderList, self.skillsTab.skillSets, skillList, self.skillListSpecialLinks, self.treeListSpecialLinks)
-		identifyLinks(self.configTab.configSetOrderList, self.configTab.configSets, configList, self.configListSpecialLinks, self.treeListSpecialLinks)
+		identifyLinks(self.itemsTab.itemSetOrderList, self.itemsTab.itemSets, itemList, self.itemListSpecialLinks,
+			self.treeListSpecialLinks)
+		identifyLinks(self.skillsTab.skillSetOrderList, self.skillsTab.skillSets, skillList, self.skillListSpecialLinks,
+			self.treeListSpecialLinks)
+		identifyLinks(self.configTab.configSetOrderList, self.configTab.configSets, configList,
+			self.configListSpecialLinks, self.treeListSpecialLinks)
 
 		-- loop over all for exact match loadouts
 		for id, tree in ipairs(treeList) do
@@ -797,7 +874,7 @@ function buildMode:SyncLoadouts()
 		for _, tree in ipairs(sortedTreeListSpecialLinks) do
 			local treeLinkId = tree.linkId
 			if ((oneItem or self.itemListSpecialLinks[treeLinkId]) and (oneSkill or self.skillListSpecialLinks[treeLinkId]) and (oneConfig or self.configListSpecialLinks[treeLinkId])) then
-				t_insert(filteredList, tree.setName .." {"..treeLinkId.."}")
+				t_insert(filteredList, tree.setName .. " {" .. treeLinkId .. "}")
 			end
 		end
 	end
@@ -850,7 +927,7 @@ function buildMode:EstimatePlayerProgress()
 		act = act + 1
 		level = m_min(m_max(PointsUsed + 1 - acts[act].questPoints - actExtra(act, extra), acts[act].level), 100)
 	until act == 11 or level <= acts[act + 1].level
-	
+
 	if self.characterLevelAutoMode and self.characterLevel ~= level then
 		self.characterLevel = level
 		self.controls.characterLevel:SetText(self.characterLevel)
@@ -865,14 +942,23 @@ function buildMode:EstimatePlayerProgress()
 		or level < 75 and "\nLabyrinth: Merciless Lab"
 		or level < 90 and "\nLabyrinth: Uber Lab"
 		or ""
-	
+
 	if PointsUsed > usedMax then InsertIfNew(self.controls.warnings.lines, "You have too many passive points allocated") end
 	if AscUsed > ascMax then InsertIfNew(self.controls.warnings.lines, "You have too many ascendancy points allocated") end
-	if SecondaryAscUsed > secondaryAscMax then InsertIfNew(self.controls.warnings.lines, "You have too many secondary ascendancy points allocated") end
+	if SecondaryAscUsed > secondaryAscMax then
+		InsertIfNew(self.controls.warnings.lines,
+			"You have too many secondary ascendancy points allocated")
+	end
 	self.Act = level < 90 and act <= 10 and act or "Endgame"
-	
-	return string.format("%s%3d / %3d   %s%d / %d", PointsUsed > usedMax and colorCodes.NEGATIVE or "^7", PointsUsed, usedMax, AscUsed > ascMax and colorCodes.NEGATIVE or "^7", AscUsed, ascMax),
-		"Required Level: "..level.."\nEstimated Progress:\nAct: "..self.Act.."\nQuestpoints: "..acts[act].questPoints.."\nExtra Skillpoints: "..actExtra(act, extra)..labSuggest
+
+	return
+		string.format("%s%3d / %3d   %s%d / %d", PointsUsed > usedMax and colorCodes.NEGATIVE or "^7", PointsUsed,
+			usedMax, AscUsed > ascMax and colorCodes.NEGATIVE or "^7", AscUsed, ascMax),
+		"Required Level: " ..
+		level ..
+		"\nEstimated Progress:\nAct: " ..
+		self.Act .. "\nQuestpoints: " .. acts[act].questPoints ..
+		"\nExtra Skillpoints: " .. actExtra(act, extra) .. labSuggest
 end
 
 function buildMode:CanExit(mode)
@@ -887,8 +973,8 @@ function buildMode:Shutdown()
 	if launch.devMode and (not main.disableDevAutoSave) and self.targetVersion and not self.abortSave then
 		if self.dbFileName then
 			self:SaveDBFile()
-		elseif self.unsaved then		
-			self.dbFileName = main.buildPath.."~~temp~~.xml"
+		elseif self.unsaved then
+			self.dbFileName = main.buildPath .. "~~temp~~.xml"
 			self.buildName = "~~temp~~"
 			self.dbFileSubPath = ""
 			self:SaveDBFile()
@@ -964,10 +1050,10 @@ function buildMode:Save(xml)
 	for _, id in ipairs(self.spectreList) do
 		t_insert(xml, { elem = "Spectre", attrib = { id = id } })
 	end
-	local addedStatNames = { }
+	local addedStatNames = {}
 	for index, statData in ipairs(self.displayStats) do
 		if matchFlags(statData.flag, statData.notFlag, self.calcsTab.mainEnv.player.mainSkill.skillFlags) then
-			local statName = statData.stat and statData.stat..(statData.childStat or "")
+			local statName = statData.stat and statData.stat .. (statData.childStat or "")
 			if statName and not addedStatNames[statName] then
 				if statData.stat == "SkillDPS" then
 					local statVal = self.calcsTab.mainOutput[statData.stat]
@@ -978,9 +1064,10 @@ function buildMode:Save(xml)
 						end
 						local lhsString = skillData.name
 						if skillData.count >= 2 then
-							lhsString = tostring(skillData.count).."x "..skillData.name
+							lhsString = tostring(skillData.count) .. "x " .. skillData.name
 						end
-						t_insert(xml, { elem = "FullDPSSkill", attrib = { stat = lhsString, value = tostring(skillData.dps * skillData.count), skillPart = skillData.skillPart or "", source = skillData.source or skillData.trigger or "" } })
+						t_insert(xml,
+							{ elem = "FullDPSSkill", attrib = { stat = lhsString, value = tostring(skillData.dps * skillData.count), skillPart = skillData.skillPart or "", source = skillData.source or skillData.trigger or "" } })
 					end
 					addedStatNames[statName] = true
 				else
@@ -1020,9 +1107,11 @@ function buildMode:Save(xml)
 			devotionVariant1 = tostring(self.timelessData.devotionVariant1),
 			devotionVariant2 = tostring(self.timelessData.devotionVariant2),
 			jewelSocketId = next(self.timelessData.jewelSocket) and tostring(self.timelessData.jewelSocket.id),
-			fallbackWeightModeIdx = next(self.timelessData.fallbackWeightMode) and tostring(self.timelessData.fallbackWeightMode.idx),
+			fallbackWeightModeIdx = next(self.timelessData.fallbackWeightMode) and
+				tostring(self.timelessData.fallbackWeightMode.idx),
 			socketFilter = self.timelessData.socketFilter and "true",
-			socketFilterDistance = self.timelessData.socketFilterDistance and tostring(self.timelessData.socketFilterDistance),
+			socketFilterDistance = self.timelessData.socketFilterDistance and
+				tostring(self.timelessData.socketFilterDistance),
 			searchList = self.timelessData.searchList and tostring(self.timelessData.searchList),
 			searchListFallback = self.timelessData.searchListFallback and tostring(self.timelessData.searchListFallback)
 		}
@@ -1062,9 +1151,9 @@ function buildMode:OnFrame(inputEvents)
 				else
 					self:CloseBuild()
 				end
-		elseif IsKeyDown("CTRL") then
+			elseif IsKeyDown("CTRL") then
 				if event.key == "i" then
-						self.viewMode = "IMPORT"
+					self.viewMode = "IMPORT"
 					self.importTab:SelectControl(self.importTab.controls.importCodeIn)
 				elseif event.key == "s" then
 					self:SaveDBFile()
@@ -1089,6 +1178,8 @@ function buildMode:OnFrame(inputEvents)
 					self.viewMode = "NOTES"
 				elseif event.key == "7" then
 					self.viewMode = "PARTY"
+				elseif event.key == "8" then
+					self.viewMode = "CUSTOM"
 				end
 			end
 		end
@@ -1138,7 +1229,7 @@ function buildMode:OnFrame(inputEvents)
 		height = main.screenH - 32
 	}
 	if self.viewMode == "IMPORT" then
-		self.importTab:Draw(tabViewPort, inputEvents)  
+		self.importTab:Draw(tabViewPort, inputEvents)
 	elseif self.viewMode == "NOTES" then
 		self.notesTab:Draw(tabViewPort, inputEvents)
 	elseif self.viewMode == "PARTY" then
@@ -1153,9 +1244,13 @@ function buildMode:OnFrame(inputEvents)
 		self.itemsTab:Draw(tabViewPort, inputEvents)
 	elseif self.viewMode == "CALCS" then
 		self.calcsTab:Draw(tabViewPort, inputEvents)
+	elseif self.viewMode == "CUSTOM" then
+		self.customTab:Draw(tabViewPort, inputEvents)
 	end
 
-	self.unsaved = self.modFlag or self.notesTab.modFlag or self.partyTab.modFlag or self.configTab.modFlag or self.treeTab.modFlag or self.treeTab.searchFlag or self.spec.modFlag or self.skillsTab.modFlag or self.itemsTab.modFlag or self.calcsTab.modFlag
+	self.unsaved = self.modFlag or self.notesTab.modFlag or self.partyTab.modFlag or self.configTab.modFlag or
+		self.treeTab.modFlag or self.treeTab.searchFlag or self.spec.modFlag or self.skillsTab.modFlag or
+		self.itemsTab.modFlag or self.calcsTab.modFlag or (self.customTab and self.customTab.modFlag)
 
 	SetDrawLayer(5)
 
@@ -1164,7 +1259,7 @@ function buildMode:OnFrame(inputEvents)
 	DrawImage(nil, 0, 0, main.screenW, 28)
 	SetDrawColor(0.85, 0.85, 0.85)
 	DrawImage(nil, 0, 28, main.screenW, 4)
-	DrawImage(nil, main.screenW/2 - 2, 0, 4, 28)
+	DrawImage(nil, main.screenW / 2 - 2, 0, 4, 28)
 
 	-- Draw side bar background
 	SetDrawColor(0.1, 0.1, 0.1)
@@ -1177,26 +1272,26 @@ end
 
 -- Opens the game version conversion popup
 function buildMode:OpenConversionPopup()
-	local controls = { }
+	local controls = {}
 	local currentVersion = treeVersions[latestTreeVersion].display
-	controls.note = new("LabelControl", nil, {0, 20, 0, 16}, colorCodes.TIP..[[
+	controls.note = new("LabelControl", nil, { 0, 20, 0, 16 }, colorCodes.TIP .. [[
 Info:^7 You are trying to load a build created for a version of Path of Exile that is
 not supported by us. You will have to convert it to the current game version to load it.
 To use a build newer than the current supported game version, you may have to update.
 To use a build older than the current supported game version, we recommend loading it
 in an older version of Path of Building Community instead.
 ]])
-	controls.label = new("LabelControl", nil, {0, 110, 0, 16}, colorCodes.WARNING..[[
+	controls.label = new("LabelControl", nil, { 0, 110, 0, 16 }, colorCodes.WARNING .. [[
 Warning:^7 Converting a build to a different game version may have side effects.
 For example, if the passive tree has changed, then some passives may be deallocated.
 You should create a backup copy of the build before proceeding.
 ]])
-	controls.convert = new("ButtonControl", nil, {-40, 170, 120, 20}, "Convert to ".. currentVersion, function()
+	controls.convert = new("ButtonControl", nil, { -40, 170, 120, 20 }, "Convert to " .. currentVersion, function()
 		main:ClosePopup()
 		self:Shutdown()
 		self:Init(self.dbFileName, self.buildName, nil, true)
 	end)
-	controls.cancel = new("ButtonControl", nil, {60, 170, 70, 20}, "Cancel", function()
+	controls.cancel = new("ButtonControl", nil, { 60, 170, 70, 20 }, "Cancel", function()
 		main:ClosePopup()
 		self:CloseBuild()
 	end)
@@ -1209,14 +1304,15 @@ function buildMode:OpenSavePopup(mode)
 		["EXIT"] = "before exiting?",
 		["UPDATE"] = "before updating?",
 	}
-	local controls = { }
-	controls.label = new("LabelControl", nil, {0, 20, 0, 16}, "^7This build has unsaved changes.\nDo you want to save them "..modeDesc[mode])
-	controls.save = new("ButtonControl", nil, {-90, 70, 80, 20}, "Save", function()
+	local controls = {}
+	controls.label = new("LabelControl", nil, { 0, 20, 0, 16 },
+		"^7This build has unsaved changes.\nDo you want to save them " .. modeDesc[mode])
+	controls.save = new("ButtonControl", nil, { -90, 70, 80, 20 }, "Save", function()
 		main:ClosePopup()
 		self.actionOnSave = mode
 		self:SaveDBFile()
 	end)
-	controls.noSave = new("ButtonControl", nil, {0, 70, 80, 20}, "Don't Save", function()
+	controls.noSave = new("ButtonControl", nil, { 0, 70, 80, 20 }, "Don't Save", function()
 		main:ClosePopup()
 		if mode == "LIST" then
 			self:CloseBuild()
@@ -1226,7 +1322,7 @@ function buildMode:OpenSavePopup(mode)
 			launch:ApplyUpdate(launch.updateAvailable)
 		end
 	end)
-	controls.close = new("ButtonControl", nil, {90, 70, 80, 20}, "Cancel", function()
+	controls.close = new("ButtonControl", nil, { 90, 70, 80, 20 }, "Cancel", function()
 		main:ClosePopup()
 	end)
 	main:OpenPopup(300, 100, "Save Changes", controls)
@@ -1234,10 +1330,10 @@ end
 
 function buildMode:OpenSaveAsPopup()
 	local newFileName, newBuildName
-	local controls = { }
+	local controls = {}
 	local function updateBuildName()
 		local buf = controls.edit.buf
-		newFileName = main.buildPath..controls.folder.subPath..buf..".xml"
+		newFileName = main.buildPath .. controls.folder.subPath .. buf .. ".xml"
 		newBuildName = buf
 		controls.save.enabled = false
 		if buf:match("%S") then
@@ -1249,23 +1345,25 @@ function buildMode:OpenSaveAsPopup()
 			end
 		end
 	end
-	controls.label = new("LabelControl", nil, {0, 20, 0, 16}, "^7Enter new build name:")
-	controls.edit = new("EditControl", nil, {0, 40, 450, 20},
-	not self.dbFileName and main.predefinedBuildName or (self.buildName or self.dbFileName):gsub("[\\/:%*%?\"<>|%c]", "-"), nil, "\\/:%*%?\"<>|%c", 100, function(buf)
-		updateBuildName()
-	end)
-	controls.folderLabel = new("LabelControl", {"TOPLEFT",nil,"TOPLEFT"}, {10, 70, 0, 16}, "^7Folder:")
-	controls.newFolder = new("ButtonControl", {"TOPLEFT",nil,"TOPLEFT"}, {100, 67, 94, 20}, "New Folder...", function()
-		main:OpenNewFolderPopup(main.buildPath..controls.folder.subPath, function(newFolderName)
-			if newFolderName then
-				controls.folder:OpenFolder(newFolderName)
-			end
+	controls.label = new("LabelControl", nil, { 0, 20, 0, 16 }, "^7Enter new build name:")
+	controls.edit = new("EditControl", nil, { 0, 40, 450, 20 },
+		not self.dbFileName and main.predefinedBuildName or
+		(self.buildName or self.dbFileName):gsub("[\\/:%*%?\"<>|%c]", "-"), nil, "\\/:%*%?\"<>|%c", 100, function(buf)
+			updateBuildName()
 		end)
-	end)
-	controls.folder = new("FolderListControl", nil, {0, 115, 450, 100}, self.dbFileSubPath, function(subPath)
+	controls.folderLabel = new("LabelControl", { "TOPLEFT", nil, "TOPLEFT" }, { 10, 70, 0, 16 }, "^7Folder:")
+	controls.newFolder = new("ButtonControl", { "TOPLEFT", nil, "TOPLEFT" }, { 100, 67, 94, 20 }, "New Folder...",
+		function()
+			main:OpenNewFolderPopup(main.buildPath .. controls.folder.subPath, function(newFolderName)
+				if newFolderName then
+					controls.folder:OpenFolder(newFolderName)
+				end
+			end)
+		end)
+	controls.folder = new("FolderListControl", nil, { 0, 115, 450, 100 }, self.dbFileSubPath, function(subPath)
 		updateBuildName()
 	end)
-	controls.save = new("ButtonControl", nil, {-45, 225, 80, 20}, "Save", function()
+	controls.save = new("ButtonControl", nil, { -45, 225, 80, 20 }, "Save", function()
 		main:ClosePopup()
 		self.dbFileName = newFileName
 		self.buildName = newBuildName
@@ -1273,7 +1371,7 @@ function buildMode:OpenSaveAsPopup()
 		self:SaveDBFile()
 		self.spec:SetWindowTitleWithBuildClass()
 	end)
-	controls.close = new("ButtonControl", nil, {45, 225, 80, 20}, "Cancel", function()
+	controls.close = new("ButtonControl", nil, { 45, 225, 80, 20 }, "Cancel", function()
 		main:ClosePopup()
 		self.actionOnSave = nil
 	end)
@@ -1291,31 +1389,33 @@ end
 -- Open the spectre library popup
 function buildMode:OpenSpectreLibrary()
 	local destList = copyTable(self.spectreList)
-	local sourceList = { }
+	local sourceList = {}
 	for id in pairs(self.data.spectres) do
 		t_insert(sourceList, id)
 	end
-	table.sort(sourceList, function(a,b) 
+	table.sort(sourceList, function(a, b)
 		if self.data.minions[a].name == self.data.minions[b].name then
 			return a < b
 		else
 			return self.data.minions[a].name < self.data.minions[b].name
 		end
 	end)
-	local controls = { }
-	controls.list = new("MinionListControl", nil, {-100, 40, 190, 250}, self.data, destList)
-	controls.source = new("MinionSearchListControl", nil, {100, 60, 190, 230}, self.data, sourceList, controls.list)
-	controls.save = new("ButtonControl", nil, {-45, 330, 80, 20}, "Save", function()
+	local controls = {}
+	controls.list = new("MinionListControl", nil, { -100, 40, 190, 250 }, self.data, destList)
+	controls.source = new("MinionSearchListControl", nil, { 100, 60, 190, 230 }, self.data, sourceList, controls.list)
+	controls.save = new("ButtonControl", nil, { -45, 330, 80, 20 }, "Save", function()
 		self.spectreList = destList
 		self.modFlag = true
 		self.buildFlag = true
 		main:ClosePopup()
 	end)
-	controls.cancel = new("ButtonControl", nil, {45, 330, 80, 20}, "Cancel", function()
+	controls.cancel = new("ButtonControl", nil, { 45, 330, 80, 20 }, "Cancel", function()
 		main:ClosePopup()
 	end)
-	controls.noteLine1 = new("LabelControl", {"TOPLEFT",controls.list,"BOTTOMLEFT"}, {24, 2, 0, 16}, "Spectres in your Library must be assigned to an active")
-	controls.noteLine2 = new("LabelControl", {"TOPLEFT",controls.list,"BOTTOMLEFT"}, {20, 18, 0, 16}, "Raise Spectre gem for their buffs and curses to activate")
+	controls.noteLine1 = new("LabelControl", { "TOPLEFT", controls.list, "BOTTOMLEFT" }, { 24, 2, 0, 16 },
+		"Spectres in your Library must be assigned to an active")
+	controls.noteLine2 = new("LabelControl", { "TOPLEFT", controls.list, "BOTTOMLEFT" }, { 20, 18, 0, 16 },
+		"Raise Spectre gem for their buffs and curses to activate")
 	local spectrePopup = main:OpenPopup(410, 360, "Spectre Library", controls)
 	spectrePopup:SelectControl(spectrePopup.controls.source.controls.searchText)
 end
@@ -1344,7 +1444,7 @@ function buildMode:UpdateClassDropdowns(treeVersion)
 end
 
 function buildMode:OpenSimilarPopup()
-	local controls = { }
+	local controls = {}
 	-- local width, height = self:GetSize()
 	local buildProviders = {
 		{
@@ -1357,20 +1457,22 @@ function buildMode:OpenSimilarPopup()
 		return main.screenH * 0.8
 	end
 	local padding = 50
-	controls.similarBuildList = new("ExtBuildListControl", nil, {0, padding, width, height() - 2 * padding}, buildProviders)
+	controls.similarBuildList = new("ExtBuildListControl", nil, { 0, padding, width, height() - 2 * padding },
+		buildProviders)
 	controls.similarBuildList.shown = true
 	controls.similarBuildList.height = function()
 		return height() - 2 * padding
 	end
-	controls.similarBuildList.width = function ()
+	controls.similarBuildList.width = function()
 		return width - padding
 	end
-	controls.similarBuildList:SetImportCode(common.base64.encode(Deflate(self:SaveDB("code"))):gsub("+","-"):gsub("/","_"))
+	controls.similarBuildList:SetImportCode(common.base64.encode(Deflate(self:SaveDB("code"))):gsub("+", "-"):gsub("/",
+		"_"))
 	controls.similarBuildList:Init("PoB Archives")
 
 	-- controls.similarBuildList.shown = not controls.similarBuildList:IsShown()
 
-	controls.close = new("ButtonControl", nil, {0, height() - (padding + 20) / 2, 80, 20}, "Close", function()
+	controls.close = new("ButtonControl", nil, { 0, height() - (padding + 20) / 2, 80, 20 }, "Close", function()
 		main:ClosePopup()
 	end)
 	-- used in PopupDialog to dynamically size the popup
@@ -1391,7 +1493,7 @@ function buildMode:RefreshSkillSelectControls(controls, mainGroup, suffix)
 	for i, socketGroup in pairs(self.skillsTab.socketGroupList) do
 		controls.mainSocketGroup.list[i] = { val = i, label = socketGroup.displayLabel }
 	end
-  controls.mainSocketGroup:CheckDroppedWidth(true)
+	controls.mainSocketGroup:CheckDroppedWidth(true)
 	if controls.warnings then controls.warnings.shown = #controls.warnings.lines > 0 end
 	if #controls.mainSocketGroup.list == 0 then
 		controls.mainSocketGroup.list[1] = { val = 1, label = "<No skills added yet>" }
@@ -1403,14 +1505,16 @@ function buildMode:RefreshSkillSelectControls(controls, mainGroup, suffix)
 		controls.mainSkillMinionSkill.shown = false
 	else
 		local mainSocketGroup = self.skillsTab.socketGroupList[mainGroup]
-		local displaySkillList = mainSocketGroup["displaySkillList"..suffix]
-		local mainActiveSkill = mainSocketGroup["mainActiveSkill"..suffix] or 1
+		local displaySkillList = mainSocketGroup["displaySkillList" .. suffix]
+		local mainActiveSkill = mainSocketGroup["mainActiveSkill" .. suffix] or 1
 		wipeTable(controls.mainSkill.list)
 		for i, activeSkill in ipairs(displaySkillList) do
 			local explodeSource = activeSkill.activeEffect.srcInstance.explodeSource
 			local explodeSourceName = explodeSource and (explodeSource.name or explodeSource.dn)
-			local colourCoded = explodeSourceName and ("From "..colorCodes[explodeSource.rarity or "NORMAL"]..explodeSourceName)
-			t_insert(controls.mainSkill.list, { val = i, label = colourCoded or activeSkill.activeEffect.grantedEffect.name })
+			local colourCoded = explodeSourceName and
+				("From " .. colorCodes[explodeSource.rarity or "NORMAL"] .. explodeSourceName)
+			t_insert(controls.mainSkill.list,
+				{ val = i, label = colourCoded or activeSkill.activeEffect.grantedEffect.name })
 		end
 		controls.mainSkill.enabled = #displaySkillList > 1
 		controls.mainSkill.selIndex = mainActiveSkill
@@ -1431,19 +1535,22 @@ function buildMode:RefreshSkillSelectControls(controls, mainGroup, suffix)
 					for i, part in ipairs(activeEffect.grantedEffect.parts) do
 						t_insert(controls.mainSkillPart.list, { val = i, label = part.name })
 					end
-					controls.mainSkillPart.selIndex = activeEffect.srcInstance["skillPart"..suffix] or 1
+					controls.mainSkillPart.selIndex = activeEffect.srcInstance["skillPart" .. suffix] or 1
 					if activeEffect.grantedEffect.parts[controls.mainSkillPart.selIndex].stages then
 						controls.mainSkillStageCount.shown = true
-						controls.mainSkillStageCount.buf = tostring(activeEffect.srcInstance["skillStageCount"..suffix] or activeEffect.grantedEffect.parts[controls.mainSkillPart.selIndex].stagesMin or 1)
+						controls.mainSkillStageCount.buf = tostring(activeEffect.srcInstance
+							["skillStageCount" .. suffix] or
+							activeEffect.grantedEffect.parts[controls.mainSkillPart.selIndex].stagesMin or 1)
 					end
 				end
 				if activeSkill.skillFlags.mine then
 					controls.mainSkillMineCount.shown = true
-					controls.mainSkillMineCount.buf = tostring(activeEffect.srcInstance["skillMineCount"..suffix] or "")
+					controls.mainSkillMineCount.buf = tostring(activeEffect.srcInstance["skillMineCount" .. suffix] or "")
 				end
 				if activeSkill.skillFlags.multiStage and not (activeEffect.grantedEffect.parts and #activeEffect.grantedEffect.parts > 1) then
 					controls.mainSkillStageCount.shown = true
-					controls.mainSkillStageCount.buf = tostring(activeEffect.srcInstance["skillStageCount"..suffix] or activeSkill.skillData.stagesMin or 1)
+					controls.mainSkillStageCount.buf = tostring(activeEffect.srcInstance["skillStageCount" .. suffix] or
+						activeSkill.skillData.stagesMin or 1)
 				end
 				if not activeSkill.skillFlags.disable and (activeEffect.grantedEffect.minionList or activeSkill.minionList[1]) then
 					wipeTable(controls.mainSkillMinion.list)
@@ -1455,7 +1562,9 @@ function buildMode:RefreshSkillSelectControls(controls, mainGroup, suffix)
 								itemSetId = itemSetId,
 							})
 						end
-						controls.mainSkillMinion:SelByValue(activeEffect.srcInstance["skillMinionItemSet"..suffix] or 1, "itemSetId")
+						controls.mainSkillMinion:SelByValue(
+							activeEffect.srcInstance["skillMinionItemSet" .. suffix] or 1,
+							"itemSetId")
 					else
 						controls.mainSkillMinionLibrary.shown = (activeEffect.grantedEffect.minionList and not activeEffect.grantedEffect.minionList[1])
 						for _, minionId in ipairs(activeSkill.minionList) do
@@ -1464,7 +1573,9 @@ function buildMode:RefreshSkillSelectControls(controls, mainGroup, suffix)
 								minionId = minionId,
 							})
 						end
-						controls.mainSkillMinion:SelByValue(activeEffect.srcInstance["skillMinion"..suffix] or controls.mainSkillMinion.list[1], "minionId")
+						controls.mainSkillMinion:SelByValue(
+							activeEffect.srcInstance["skillMinion" .. suffix] or controls.mainSkillMinion.list[1],
+							"minionId")
 					end
 					controls.mainSkillMinion.enabled = #controls.mainSkillMinion.list > 1
 					controls.mainSkillMinion.shown = true
@@ -1473,7 +1584,8 @@ function buildMode:RefreshSkillSelectControls(controls, mainGroup, suffix)
 						for _, minionSkill in ipairs(activeSkill.minion.activeSkillList) do
 							t_insert(controls.mainSkillMinionSkill.list, minionSkill.activeEffect.grantedEffect.name)
 						end
-						controls.mainSkillMinionSkill.selIndex = activeEffect.srcInstance["skillMinionSkill"..suffix] or 1
+						controls.mainSkillMinionSkill.selIndex = activeEffect.srcInstance["skillMinionSkill" .. suffix] or
+							1
 						controls.mainSkillMinionSkill.shown = true
 						controls.mainSkillMinionSkill.enabled = #controls.mainSkillMinionSkill.list > 1
 					else
@@ -1492,8 +1604,8 @@ function buildMode:FormatStat(statData, statVal, overCapStatVal, colorOverride)
 	if statData.label == "Unreserved Life" and statVal == 0 then
 		color = colorCodes.NEGATIVE
 	end
-	
-	local valStr = s_format("%"..statData.fmt, val)
+
+	local valStr = s_format("%" .. statData.fmt, val)
 	valStr:gsub("%.", main.decimalSeparator)
 	valStr = color .. formatNumSep(valStr)
 
@@ -1522,49 +1634,52 @@ function buildMode:AddDisplayStatList(statList, actor)
 				if statVal and statData.childStat then
 					statVal = statVal[statData.childStat]
 				end
-				if statVal and ((statData.condFunc and statData.condFunc(statVal,actor.output)) or (not statData.condFunc and statVal ~= 0)) then
+				if statVal and ((statData.condFunc and statData.condFunc(statVal, actor.output)) or (not statData.condFunc and statVal ~= 0)) then
 					local overCapStatVal = actor.output[statData.overCapStat] or nil
 					if statData.stat == "SkillDPS" then
 						labelColor = colorCodes.CUSTOM
-						table.sort(actor.output.SkillDPS, function(a,b) return (a.dps * a.count) > (b.dps * b.count) end)
+						table.sort(actor.output.SkillDPS, function(a, b) return (a.dps * a.count) > (b.dps * b.count) end)
 						for _, skillData in ipairs(actor.output.SkillDPS) do
 							local triggerStr = ""
 							if skillData.trigger and skillData.trigger ~= "" then
-								triggerStr = colorCodes.WARNING.." ("..skillData.trigger..")"..labelColor
+								triggerStr = colorCodes.WARNING .. " (" .. skillData.trigger .. ")" .. labelColor
 							end
-							local lhsString = labelColor..skillData.name..triggerStr..":"
+							local lhsString = labelColor .. skillData.name .. triggerStr .. ":"
 							if skillData.count >= 2 then
-								lhsString = labelColor..tostring(skillData.count).."x "..skillData.name..triggerStr..":"
+								lhsString = labelColor ..
+									tostring(skillData.count) .. "x " .. skillData.name .. triggerStr .. ":"
 							end
 							t_insert(statBoxList, {
 								height = 16,
 								lhsString,
-								self:FormatStat({fmt = "1.f"}, skillData.dps * skillData.count, overCapStatVal),
+								self:FormatStat({ fmt = "1.f" }, skillData.dps * skillData.count, overCapStatVal),
 							})
 							if skillData.skillPart then
 								t_insert(statBoxList, {
 									height = 14,
-									align = "CENTER_X", x = 140,
-									"^8"..skillData.skillPart,
+									align = "CENTER_X",
+									x = 140,
+									"^8" .. skillData.skillPart,
 								})
 							end
 							if skillData.source then
 								t_insert(statBoxList, {
 									height = 14,
-									align = "CENTER_X", x = 140,
-									colorCodes.WARNING.."from " ..skillData.source,
+									align = "CENTER_X",
+									x = 140,
+									colorCodes.WARNING .. "from " .. skillData.source,
 								})
 							end
 						end
 					elseif not (statData.hideStat) then
 						-- Change the color of the stat label to red if cost exceeds pool
 						local colorOverride = nil
-						if actor.output[statData.stat.."Warning"] or (statData.warnFunc and statData.warnFunc(statVal, actor.output) and statData.warnColor) then
+						if actor.output[statData.stat .. "Warning"] or (statData.warnFunc and statData.warnFunc(statVal, actor.output) and statData.warnColor) then
 							colorOverride = colorCodes.NEGATIVE
 						end
 						t_insert(statBoxList, {
 							height = 16,
-							labelColor..statData.label..":",
+							labelColor .. statData.label .. ":",
 							self:FormatStat(statData, statVal, overCapStatVal, colorOverride),
 						})
 					end
@@ -1576,47 +1691,56 @@ function buildMode:AddDisplayStatList(statList, actor)
 					end
 				end
 			elseif statData.label and statData.condFunc and statData.condFunc(actor.output) then
-				t_insert(statBoxList, { 
-					height = 16, labelColor..statData.label..":", 
-					"^7"..actor.output[statData.labelStat].."%^x808080" .. " (" .. statData.val  .. ")",})
+				t_insert(statBoxList, {
+					height = 16,
+					labelColor .. statData.label .. ":",
+					"^7" .. actor.output[statData.labelStat] .. "%^x808080" .. " (" .. statData.val .. ")",
+				})
 			elseif not statBoxList[#statBoxList] or statBoxList[#statBoxList][1] then
 				t_insert(statBoxList, { height = 6 })
 			end
 		end
 	end
-	for pool, warningFlag in pairs({["Life"] = "LifeCostWarning", ["Mana"] = "ManaCostWarning", ["Rage"] = "RageCostWarning", ["Energy Shield"] = "ESCostWarning"}) do
+	for pool, warningFlag in pairs({ ["Life"] = "LifeCostWarning", ["Mana"] = "ManaCostWarning", ["Rage"] = "RageCostWarning", ["Energy Shield"] = "ESCostWarning" }) do
 		if actor.output[warningFlag] then
-			local line = "You do not have enough "..(actor.output.EnergyShieldProtectsMana and pool == "Mana" and "Energy Shield and Mana" or pool).." to use: "
+			local line = "You do not have enough " ..
+				(actor.output.EnergyShieldProtectsMana and pool == "Mana" and "Energy Shield and Mana" or pool) ..
+				" to use: "
 			for _, skill in ipairs(actor.output[warningFlag]) do
-				line = line..skill..", "
+				line = line .. skill .. ", "
 			end
 			line = line:sub(1, -3)
 			InsertIfNew(self.controls.warnings.lines, line)
 		end
 	end
-	for pool, warningFlag in pairs({["Unreserved life"] = "LifePercentCostPercentCostWarning", ["Unreserved Mana"] = "ManaPercentCostPercentCostWarning"}) do
+	for pool, warningFlag in pairs({ ["Unreserved life"] = "LifePercentCostPercentCostWarning", ["Unreserved Mana"] = "ManaPercentCostPercentCostWarning" }) do
 		if actor.output[warningFlag] then
-			local line = "You do not have enough ".. pool .."% to use: "
+			local line = "You do not have enough " .. pool .. "% to use: "
 			for _, skill in ipairs(actor.output[warningFlag]) do
-				line = line..skill..", "
+				line = line .. skill .. ", "
 			end
 			line = line:sub(1, -3)
 			InsertIfNew(self.controls.warnings.lines, line)
 		end
 	end
 	if actor.output.VixensTooMuchCastSpeedWarn then
-		InsertIfNew(self.controls.warnings.lines, "You may have too much cast speed or too little cooldown reduction to effectively use Vixen's Curse replacement")
+		InsertIfNew(self.controls.warnings.lines,
+			"You may have too much cast speed or too little cooldown reduction to effectively use Vixen's Curse replacement")
 	end
 	if actor.output.VixenModeNoVixenGlovesWarn then
-		InsertIfNew(self.controls.warnings.lines, "Vixen's calculation mode for Doom Blast is selected but you do not have Vixen's Entrapment Embroidered Gloves equipped")
+		InsertIfNew(self.controls.warnings.lines,
+			"Vixen's calculation mode for Doom Blast is selected but you do not have Vixen's Entrapment Embroidered Gloves equipped")
 	end
 
 	do
 		local aspectCount = 0
 		aspectCount = aspectCount + (actor.output.CrabBarriersMax > 0 and actor.output.CrabBarriers > 0 and 1 or 0)
-		aspectCount = aspectCount + (aspectCount < 2 and actor.modDB:Flag(nil, "Condition:AspectOfTheSpiderActive") and 1 or 0)
-		aspectCount = aspectCount + (aspectCount < 2 and (actor.modDB:Flag(nil, "Condition:CatsAgilityActive") or actor.modDB:Flag(nil, "Condition:CatsStealthActive")) and 1 or 0)
-		aspectCount = aspectCount + (aspectCount < 2 and (actor.modDB:Flag(nil, "Condition:AviansFlightActive") or actor.modDB:Flag(nil, "Condition:AviansMightActive")) and 1 or 0)
+		aspectCount = aspectCount +
+			(aspectCount < 2 and actor.modDB:Flag(nil, "Condition:AspectOfTheSpiderActive") and 1 or 0)
+		aspectCount = aspectCount +
+			(aspectCount < 2 and (actor.modDB:Flag(nil, "Condition:CatsAgilityActive") or actor.modDB:Flag(nil, "Condition:CatsStealthActive")) and 1 or 0)
+		aspectCount = aspectCount +
+			(aspectCount < 2 and (actor.modDB:Flag(nil, "Condition:AviansFlightActive") or actor.modDB:Flag(nil, "Condition:AviansMightActive")) and 1 or 0)
 		if aspectCount > 1 then
 			InsertIfNew(self.controls.warnings.lines, "You have more than one Aspect skill active")
 		end
@@ -1626,12 +1750,12 @@ end
 function buildMode:InsertItemWarnings()
 	if self.calcsTab.mainEnv.itemWarnings.jewelLimitWarning then
 		for _, warning in ipairs(self.calcsTab.mainEnv.itemWarnings.jewelLimitWarning) do
-			InsertIfNew(self.controls.warnings.lines, "You are exceeding jewel limit with the jewel "..warning)
+			InsertIfNew(self.controls.warnings.lines, "You are exceeding jewel limit with the jewel " .. warning)
 		end
 	end
 	if self.calcsTab.mainEnv.itemWarnings.socketLimitWarning then
 		for _, warning in ipairs(self.calcsTab.mainEnv.itemWarnings.socketLimitWarning) do
-			InsertIfNew(self.controls.warnings.lines, "You have too many gems in your "..warning.." slot")
+			InsertIfNew(self.controls.warnings.lines, "You have too many gems in your " .. warning .. " slot")
 		end
 	end
 end
@@ -1641,15 +1765,23 @@ function buildMode:RefreshStatList()
 	self.controls.warnings.lines = {}
 	local statBoxList = wipeTable(self.controls.statBox.list)
 	if self.calcsTab.mainEnv.player.mainSkill.infoMessage then
-			if #self.calcsTab.mainEnv.player.mainSkill.infoMessage > 40 then
-				for line in string.gmatch(self.calcsTab.mainEnv.player.mainSkill.infoMessage, "([^:]+)") do
-					t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, colorCodes.CUSTOM .. line})
-				end
-			else
-				t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, colorCodes.CUSTOM .. self.calcsTab.mainEnv.player.mainSkill.infoMessage})
+		if #self.calcsTab.mainEnv.player.mainSkill.infoMessage > 40 then
+			for line in string.gmatch(self.calcsTab.mainEnv.player.mainSkill.infoMessage, "([^:]+)") do
+				t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, colorCodes.CUSTOM .. line })
 			end
+		else
+			t_insert(statBoxList,
+				{
+					height = 14,
+					align = "CENTER_X",
+					x = 140,
+					colorCodes.CUSTOM ..
+					self.calcsTab.mainEnv.player.mainSkill.infoMessage
+				})
+		end
 		if self.calcsTab.mainEnv.player.mainSkill.infoMessage2 then
-			t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, "^8" .. self.calcsTab.mainEnv.player.mainSkill.infoMessage2})
+			t_insert(statBoxList,
+				{ height = 14, align = "CENTER_X", x = 140, "^8" .. self.calcsTab.mainEnv.player.mainSkill.infoMessage2 })
 		end
 	end
 	if self.calcsTab.mainEnv.minion then
@@ -1658,13 +1790,27 @@ function buildMode:RefreshStatList()
 			-- Split the line if too long
 			if #self.calcsTab.mainEnv.minion.mainSkill.infoMessage > 40 then
 				for line in string.gmatch(self.calcsTab.mainEnv.minion.mainSkill.infoMessage, "([^:]+)") do
-					t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, colorCodes.CUSTOM .. line})
+					t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, colorCodes.CUSTOM .. line })
 				end
 			else
-				t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, colorCodes.CUSTOM .. self.calcsTab.mainEnv.minion.mainSkill.infoMessage})
+				t_insert(statBoxList,
+					{
+						height = 14,
+						align = "CENTER_X",
+						x = 140,
+						colorCodes.CUSTOM ..
+						self.calcsTab.mainEnv.minion.mainSkill.infoMessage
+					})
 			end
 			if self.calcsTab.mainEnv.minion.mainSkill.infoMessage2 then
-				t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, "^8" .. self.calcsTab.mainEnv.minion.mainSkill.infoMessage2})
+				t_insert(statBoxList,
+					{
+						height = 14,
+						align = "CENTER_X",
+						x = 140,
+						"^8" ..
+						self.calcsTab.mainEnv.minion.mainSkill.infoMessage2
+					})
 			end
 		end
 		self:AddDisplayStatList(self.minionDisplayStats, self.calcsTab.mainEnv.minion)
@@ -1673,7 +1819,8 @@ function buildMode:RefreshStatList()
 	end
 	if self.calcsTab.mainEnv.player.mainSkill.skillFlags.disable then
 		t_insert(statBoxList, { height = 16, "^7Skill disabled:" })
-		t_insert(statBoxList, { height = 14, align = "CENTER_X", x = 140, self.calcsTab.mainEnv.player.mainSkill.disableReason })
+		t_insert(statBoxList,
+			{ height = 14, align = "CENTER_X", x = 140, self.calcsTab.mainEnv.player.mainSkill.disableReason })
 	end
 	self:AddDisplayStatList(self.displayStats, self.calcsTab.mainEnv.player)
 	self:InsertItemWarnings()
@@ -1689,13 +1836,14 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 			if statData.stat == "FullDPS" and not compareOutput[statData.stat] then
 				diff = 0
 			end
-			if (diff > 0.001 or diff < -0.001) and (not statData.condFunc or statData.condFunc(statVal1,compareOutput) or statData.condFunc(statVal2,baseOutput)) then
+			if (diff > 0.001 or diff < -0.001) and (not statData.condFunc or statData.condFunc(statVal1, compareOutput) or statData.condFunc(statVal2, baseOutput)) then
 				if count == 0 then
 					tooltip:AddLine(14, header)
 				end
-				local color = ((statData.lowerIsBetter and diff < 0) or (not statData.lowerIsBetter and diff > 0)) and colorCodes.POSITIVE or colorCodes.NEGATIVE
+				local color = ((statData.lowerIsBetter and diff < 0) or (not statData.lowerIsBetter and diff > 0)) and
+					colorCodes.POSITIVE or colorCodes.NEGATIVE
 				local val = diff * ((statData.pc or statData.mod) and 100 or 1)
-				local valStr = s_format("%+"..statData.fmt, val) -- Can't use self:FormatStat, because it doesn't have %+. Adding that would have complicated a simple function
+				local valStr = s_format("%+" .. statData.fmt, val) -- Can't use self:FormatStat, because it doesn't have %+. Adding that would have complicated a simple function
 
 				valStr = formatNumSep(valStr)
 
@@ -1709,7 +1857,9 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 					end
 				end
 				if nodeCount then
-					line = line .. s_format(" ^8[%+"..statData.fmt.."%s per point]", diff * ((statData.pc or statData.mod) and 100 or 1) / nodeCount, pcPerPt)
+					line = line ..
+						s_format(" ^8[%+" .. statData.fmt .. "%s per point]",
+							diff * ((statData.pc or statData.mod) and 100 or 1) / nodeCount, pcPerPt)
 				end
 				tooltip:AddLine(14, line)
 				count = count + 1
@@ -1725,20 +1875,24 @@ end
 function buildMode:AddStatComparesToTooltip(tooltip, baseOutput, compareOutput, header, nodeCount)
 	local count = 0
 	if self.calcsTab.mainEnv.player.mainSkill.minion and baseOutput.Minion and compareOutput.Minion then
-		count = count + self:CompareStatList(tooltip, self.minionDisplayStats, self.calcsTab.mainEnv.minion, baseOutput.Minion, compareOutput.Minion, header.."\n^7Minion:", nodeCount)
+		count = count +
+			self:CompareStatList(tooltip, self.minionDisplayStats, self.calcsTab.mainEnv.minion, baseOutput.Minion,
+				compareOutput.Minion, header .. "\n^7Minion:", nodeCount)
 		if count > 0 then
 			header = "^7Player:"
 		else
-			header = header.."\n^7Player:"
+			header = header .. "\n^7Player:"
 		end
 	end
-	count = count + self:CompareStatList(tooltip, self.displayStats, self.calcsTab.mainEnv.player, baseOutput, compareOutput, header, nodeCount)
+	count = count +
+		self:CompareStatList(tooltip, self.displayStats, self.calcsTab.mainEnv.player, baseOutput, compareOutput, header,
+			nodeCount)
 	return count
 end
 
 -- Add requirements to tooltip
 do
-	local req = { }
+	local req = {}
 	function buildMode:AddRequirementsToTooltip(tooltip, level, str, dex, int, strBase, dexBase, intBase)
 		if level and level > 0 then
 			t_insert(req, s_format("^x7F7F7FLevel %s%d", main:StatColor(level, nil, self.characterLevel), level))
@@ -1747,30 +1901,33 @@ do
 		if self.calcsTab.mainEnv.modDB:Flag(nil, "OmniscienceRequirements") then
 			local omniSatisfy = self.calcsTab.mainEnv.modDB:Sum("INC", nil, "OmniAttributeRequirements")
 			local highestAttribute = 0
-			for i, stat in ipairs({str, dex, int}) do
-				if((stat or 0) > highestAttribute) then
+			for i, stat in ipairs({ str, dex, int }) do
+				if ((stat or 0) > highestAttribute) then
 					highestAttribute = stat
 				end
 			end
-			local omni = math.floor(highestAttribute * (100/omniSatisfy))
+			local omni = math.floor(highestAttribute * (100 / omniSatisfy))
 			if omni and (omni > 0 or omni > self.calcsTab.mainOutput.Omni) then
 				t_insert(req, s_format("%s%d ^x7F7F7FOmni", main:StatColor(omni, 0, self.calcsTab.mainOutput.Omni), omni))
 			end
-		else 
+		else
 			if str and (str > 14 or str > self.calcsTab.mainOutput.Str) then
-				t_insert(req, s_format("%s%d ^x7F7F7FStr", main:StatColor(str, strBase, self.calcsTab.mainOutput.Str), str))
+				t_insert(req,
+					s_format("%s%d ^x7F7F7FStr", main:StatColor(str, strBase, self.calcsTab.mainOutput.Str), str))
 			end
 			if dex and (dex > 14 or dex > self.calcsTab.mainOutput.Dex) then
-				t_insert(req, s_format("%s%d ^x7F7F7FDex", main:StatColor(dex, dexBase, self.calcsTab.mainOutput.Dex), dex))
+				t_insert(req,
+					s_format("%s%d ^x7F7F7FDex", main:StatColor(dex, dexBase, self.calcsTab.mainOutput.Dex), dex))
 			end
 			if int and (int > 14 or int > self.calcsTab.mainOutput.Int) then
-				t_insert(req, s_format("%s%d ^x7F7F7FInt", main:StatColor(int, intBase, self.calcsTab.mainOutput.Int), int))
+				t_insert(req,
+					s_format("%s%d ^x7F7F7FInt", main:StatColor(int, intBase, self.calcsTab.mainOutput.Int), int))
 			end
-		end	
+		end
 		if req[1] then
-			tooltip:AddLine(16, "^x7F7F7FRequires "..table.concat(req, "^x7F7F7F, "))
+			tooltip:AddLine(16, "^x7F7F7FRequires " .. table.concat(req, "^x7F7F7F, "))
 			tooltip:AddSeparator(10)
-		end	
+		end
 		wipeTable(req)
 	end
 end
@@ -1782,7 +1939,7 @@ function buildMode:LoadDB(xmlText, fileName)
 		launch:ShowErrMsg("^1Error loading '%s': %s", fileName, errMsg)
 		return true
 	elseif #dbXML == 0 then
-		main:OpenMessagePopup("Error", "Build file is empty, or error parsing xml.\n\n"..fileName)
+		main:OpenMessagePopup("Error", "Build file is empty, or error parsing xml.\n\n" .. fileName)
 		return true
 	elseif dbXML[1].elem ~= "PathOfBuilding" then
 		launch:ShowErrMsg("^1Error parsing '%s': 'PathOfBuilding' root element missing", fileName)
@@ -1856,7 +2013,6 @@ function buildMode:SaveDB(fileName)
 	end
 end
 
-
 function buildMode:SaveDBFile()
 	if not self.dbFileName then
 		self:OpenSaveAsPopup()
@@ -1868,7 +2024,8 @@ function buildMode:SaveDBFile()
 	end
 	local file = io.open(self.dbFileName, "w+")
 	if not file then
-		main:OpenMessagePopup("Error", "Couldn't save the build file:\n"..self.dbFileName.."\nMake sure the save folder exists and is writable.")
+		main:OpenMessagePopup("Error",
+			"Couldn't save the build file:\n" .. self.dbFileName .. "\nMake sure the save folder exists and is writable.")
 		return true
 	end
 	file:write(xmlText)
